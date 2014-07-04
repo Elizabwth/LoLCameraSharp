@@ -42,6 +42,8 @@ namespace LoLCameraSharp
         float defaultYaw, yaw = 0f;
         float defaultCameraHeight, cameraHeight = 0f;
         float defaultDrawDistance, drawDistance = 0f;
+        float defaultFoVDegree, fovDegree = 0f;
+        float defaultZoom, zoom = 0f;
         float speed = 25.0f;
         byte defaultCameraMode, cameraMode = 0;
         Stopwatch deltaTime = new Stopwatch();
@@ -130,12 +132,12 @@ namespace LoLCameraSharp
 
             if (((Hotkeys)cameraHeightIncreaseHotkey.Tag).IsTriggered())
             {
-                cameraHeight += speed * deltaTime;
+                cameraHeight += (10*speed) * deltaTime;
                 m.WriteFloat(CameraHeightAddress, cameraHeight);
             }
             else if (((Hotkeys)cameraHeightDecreaseHotkey.Tag).IsTriggered())
             {
-                cameraHeight -= speed * deltaTime;
+                cameraHeight -= (10*speed) * deltaTime;
                 m.WriteFloat(CameraHeightAddress, cameraHeight);
             }
 
@@ -157,6 +159,31 @@ namespace LoLCameraSharp
 
             if (((Hotkeys)restoreDefaultsHotkey.Tag).IsTriggered())
                 RestoreDefaults();
+
+            // fov addition
+            if (((Hotkeys)fovIncreaseHotkey.Tag).IsTriggered())
+            {
+                fovDegree += speed * deltaTime;
+                m.WriteFloat(FoVAddress, fovDegree);
+            }
+            else if (((Hotkeys)fovDecreaseHotkey.Tag).IsTriggered())
+            {
+                fovDegree -= speed * deltaTime;
+                m.WriteFloat(FoVAddress, fovDegree);
+            }
+            // zoom addition
+            /*
+            if (((Hotkeys)zoomIncreaseHotkey.Tag).IsTriggered())
+            {
+                zoom += (10*speed) * deltaTime;
+                m.WriteFloat(ZoomAddress, zoom);
+            }
+            else if (((Hotkeys)zoomDecreaseHotkey.Tag).IsTriggered())
+            {
+                zoom -= (10*speed) * deltaTime;
+                m.WriteFloat(ZoomAddress, zoom);
+            }
+            */
         }
 
         private bool GetCameraOffsets()
@@ -235,6 +262,10 @@ namespace LoLCameraSharp
             defaultCameraHeight = cameraHeight = m.ReadFloat(CameraHeightAddress);
             defaultDrawDistance = drawDistance = m.ReadFloat(DrawDistanceAddress);
             defaultCameraMode = cameraMode = m.ReadBytes(CameraModeAddress, 1)[0];
+            // fov addition
+            defaultFoVDegree = fovDegree = m.ReadFloat(FoVAddress);
+            // zoom addition
+            defaultZoom = zoom = m.ReadFloat(ZoomAddress);
             speed = 25.0f;
         }
 
@@ -244,11 +275,16 @@ namespace LoLCameraSharp
             yaw = defaultYaw;
             cameraHeight = defaultCameraHeight;
             drawDistance = defaultDrawDistance;
+            fovDegree = defaultFoVDegree;
+
             m.WriteFloat(PitchAddress, defaultPitch);
             m.WriteFloat(YawAddress, defaultYaw);
             m.WriteFloat(CameraHeightAddress, defaultCameraHeight);
             m.WriteFloat(DrawDistanceAddress, defaultDrawDistance);
             m.WriteBytes(CameraModeAddress, BitConverter.GetBytes(defaultCameraMode));
+
+            m.WriteFloat(FoVAddress, defaultFoVDegree);
+            //m.WriteFloat(ZoomAddress, defaultZoom);
         }
 
         private void LoLCamera_Load(object sender, EventArgs e)
@@ -297,6 +333,12 @@ namespace LoLCameraSharp
 
             parser.AddSetting("ViewDistance", "IncreaseHotkey", drawDistanceIncreaseHotkey.Text);
             parser.AddSetting("ViewDistance", "DecreaseHotkey", drawDistanceDecreaseHotkey.Text);
+            // fov addition
+            parser.AddSetting("FoV", "IncreaseHotkey", fovIncreaseHotkey.Text);
+            parser.AddSetting("FoV", "DecreaseHotkey", fovDecreaseHotkey.Text);
+            // zoom addition
+            //parser.AddSetting("Zoom", "IncreaseHotkey", zoomIncreaseHotkey.Text);
+            //parser.AddSetting("Zoom", "DecreaseHotkey", zoomDecreaseHotkey.Text);
 
             parser.AddSetting("RestoreDefaults", "Hotkey", restoreDefaultsHotkey.Text);
 
@@ -343,6 +385,24 @@ namespace LoLCameraSharp
             hotkey = parser.GetSetting("ViewDistance", "DecreaseHotkey");
             drawDistanceDecreaseHotkey.Text = hotkey;
             drawDistanceDecreaseHotkey.Tag = parseSetting(hotkey);
+
+            // fov addition
+            hotkey = parser.GetSetting("FoV", "IncreaseHotkey");
+            fovIncreaseHotkey.Text = hotkey;
+            fovIncreaseHotkey.Tag = parseSetting(hotkey);
+            hotkey = parser.GetSetting("FoV", "DecreaseHotkey");
+            fovDecreaseHotkey.Text = hotkey;
+            fovDecreaseHotkey.Tag = parseSetting(hotkey);
+
+            // zoom addition
+            /*
+            hotkey = parser.GetSetting("Zoom", "IncreaseHotkey");
+            zoomIncreaseHotkey.Text = hotkey;
+            zoomIncreaseHotkey.Tag = parseSetting(hotkey);
+            hotkey = parser.GetSetting("Zoom", "DecreaseHotkey");
+            zoomDecreaseHotkey.Text = hotkey;
+            zoomDecreaseHotkey.Tag = parseSetting(hotkey);
+            */
 
             hotkey = parser.GetSetting("RestoreDefaults", "Hotkey");
             restoreDefaultsHotkey.Text = hotkey;
