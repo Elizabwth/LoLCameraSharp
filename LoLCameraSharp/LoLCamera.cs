@@ -31,6 +31,9 @@ namespace LoLCameraSharp
         IntPtr ZoomAddress;
         IntPtr DrawDistanceAddress;
         IntPtr CameraModeAddress;
+        IntPtr MaxZoomAddress;
+
+        IntPtr PointerAddress;
 
         //Timer Ticks:
         Timer UpdateCamera = new Timer();
@@ -106,7 +109,11 @@ namespace LoLCameraSharp
 
         private void HandleCamera(float deltaTime)
         {
-            m.WriteBytes(CameraModeAddress, BitConverter.GetBytes(0x00));
+            //m.WriteBytes(CameraModeAddress, new Byte[] {0x00});
+            m.WriteFloat(MaxZoomAddress, 4000.0f); //Override Max Zoom
+            //m.WriteFloat(ZoomAddress, 3000.0f); //Desired Zoom
+            //m.WriteFloat(ZoomAddress - 0x04, 3000); //Current Zoom
+
             // Check Hotkeys for key presses and adjust camera accordingly, get mouse location etc!
             if (((Hotkeys)pitchIncreaseHotkey.Tag).IsTriggered())
             {
@@ -171,19 +178,7 @@ namespace LoLCameraSharp
                 fovDegree -= speed * deltaTime;
                 m.WriteFloat(FoVAddress, fovDegree);
             }
-            // zoom addition
-            /*
-            if (((Hotkeys)zoomIncreaseHotkey.Tag).IsTriggered())
-            {
-                zoom += (10*speed) * deltaTime;
-                m.WriteFloat(ZoomAddress, zoom);
-            }
-            else if (((Hotkeys)zoomDecreaseHotkey.Tag).IsTriggered())
-            {
-                zoom -= (10*speed) * deltaTime;
-                m.WriteFloat(ZoomAddress, zoom);
-            }
-            */
+            
         }
 
         private bool GetCameraOffsets()
@@ -211,8 +206,10 @@ namespace LoLCameraSharp
                 PitchAddress = (IntPtr)(pointerAddr + 0x120);
                 YPositionAddress = (IntPtr)(pointerAddr + 0x10C);
                 XPositionAddress = (IntPtr)(pointerAddr + 0x104);
-                ZoomAddress = (IntPtr)(pointerAddr + 0x1BC);
+                ZoomAddress = (IntPtr)(pointerAddr + 0x1BC); //Desired Zoom, Current Zoom - 0x04
                 CameraModeAddress = (IntPtr)(pointerAddr + 0x1C0);
+
+                PointerAddress = (IntPtr)(pointerAddr);
 
                 patternAddr = p.FindPattern("\\xC7\\x87\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\xE8\\x00\\x00\\x00\\x00\\x8B\\x87\\x00\\x00\\x00\\x00\\x8D\\x8F\\x00\\x00\\x00\\x00\\x89\\x45\\xCC", "xx????????x????xx????xx????xxx", ref m);
                 
@@ -230,6 +227,15 @@ namespace LoLCameraSharp
                 pointerAddr = m.ReadUInt((IntPtr)patternAddr);
 
                 DrawDistanceAddress = (IntPtr)(pointerAddr + 0x10);
+    
+                //Max Zoom Out
+                patternAddr = p.FindPattern("\\xF3\\x0F\\x10\\x0D\\x00\\x00\\x00\\x00\\x0F\\x2F\\xC1\\x77\\x0D\\xF3\\x0F\\x10\\x0D\\x00\\x00\\x00\\x00", "xxxx????xxxxxxxxx????", ref m);
+
+                if (patternAddr == 0)
+                    return false; //Pattern is out of date
+                MaxZoomAddress = (IntPtr)m.ReadUInt((IntPtr)patternAddr + 0x04);
+                //Unprotect the MaxZoom Address
+                m.WriteProtectedMemory(MaxZoomAddress, 0x04, (uint)MemoryEditor.Protection.PAGE_EXECUTE_READWRITE, (uint)MemoryEditor.Protection.PAGE_READONLY);
 
                 addressView.Lines = DisplayAddresses();
                 return true;
@@ -251,6 +257,8 @@ namespace LoLCameraSharp
             AddressDisplay.Add(string.Concat(new object[] { "View Distance Address: ", DrawDistanceAddress.ToString("X"), ",  Value: ", m.ReadFloat(DrawDistanceAddress).ToString() }));
             AddressDisplay.Add(string.Concat(new object[] { "Camera Rotation Speed: ", speed.ToString() }));
             AddressDisplay.Add(string.Concat(new object[] { "Camera Mode: ", cameraMode.ToString("X") }));
+            AddressDisplay.Add(string.Concat(new object[] { "Max Zoom Address: ", MaxZoomAddress.ToString("X"), ",  Value: ", m.ReadFloat(MaxZoomAddress).ToString() }));
+            AddressDisplay.Add(string.Concat(new object[] { "Pointer Address: ", PointerAddress.ToString("X")} ));
 
             return AddressDisplay.ToArray();
         }
@@ -284,7 +292,7 @@ namespace LoLCameraSharp
             m.WriteBytes(CameraModeAddress, BitConverter.GetBytes(defaultCameraMode));
 
             m.WriteFloat(FoVAddress, defaultFoVDegree);
-            //m.WriteFloat(ZoomAddress, defaultZoom);
+            m.WriteFloat(ZoomAddress, defaultZoom);
         }
 
         private void LoLCamera_Load(object sender, EventArgs e)
@@ -403,6 +411,7 @@ namespace LoLCameraSharp
             zoomDecreaseHotkey.Text = hotkey;
             zoomDecreaseHotkey.Tag = parseSetting(hotkey);
             */
+            
 
             hotkey = parser.GetSetting("RestoreDefaults", "Hotkey");
             restoreDefaultsHotkey.Text = hotkey;

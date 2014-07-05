@@ -495,8 +495,9 @@
             this.zoomTitleLabel.TabIndex = 22;
             this.zoomTitleLabel.Text = "Zoom:";
             /// --- end zoom --- ///
+            rolling += 45;
             */
-            
+
             // 
             // lblHotkeys
             // 
@@ -609,12 +610,14 @@
         private System.Windows.Forms.Label fovIncLabel;
         private System.Windows.Forms.Label fovDecLabel;
         private System.Windows.Forms.Label fovTitleLabel;
-        // fov
+        // zoom
+        /*
         private System.Windows.Forms.TextBox zoomDecreaseHotkey;
         private System.Windows.Forms.TextBox zoomIncreaseHotkey;
         private System.Windows.Forms.Label zoomIncLabel;
         private System.Windows.Forms.Label zoomDecLabel;
         private System.Windows.Forms.Label zoomTitleLabel;
+        */
 
     }
 }
